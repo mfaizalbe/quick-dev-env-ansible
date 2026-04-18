@@ -19,10 +19,12 @@
   - name: Brew update (macOS)
     shell: brew update
     when: ansible_facts['os_family'] == "Darwin"
+    become: false
 
   - name: Install macOS tools from Brewfile
     shell: brew bundle --file ./Brewfile
     when: ansible_facts['os_family'] == "Darwin"
+    become: false
 
 
   # ---------------------------
