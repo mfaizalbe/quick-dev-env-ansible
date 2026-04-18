@@ -1,0 +1,113 @@
+- name: Quick Dev Environment Setup
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  become: true
+
+  tasks:
+
+  # ---------------------------
+  # MACOS SETUP
+  # ---------------------------
+  - name: Install Homebrew (macOS)
+    shell: |
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    when: ansible_facts['os_family'] == "Darwin"
+    args:
+      creates: /opt/homebrew/bin/brew
+
+  - name: Brew update (macOS)
+    shell: brew update
+    when: ansible_facts['os_family'] == "Darwin"
+
+  - name: Install macOS tools from Brewfile
+    shell: brew bundle --file ./Brewfile
+    when: ansible_facts['os_family'] == "Darwin"
+
+
+  # ---------------------------
+  # LINUX / WSL SETUP
+  # ---------------------------
+  - name: Detect WSL
+    shell: grep -qi microsoft /proc/version
+    register: is_wsl
+    ignore_errors: yes
+    when: ansible_facts['os_family'] == "Debian"
+
+  - name: Install base packages (Linux)
+    apt:
+      name:
+        - git
+        - curl
+        - wget
+        - python3
+        - python3-pip
+        - python3-venv
+        - build-essential
+        - unzip
+      state: present
+    when: ansible_facts['os_family'] == "Debian"
+
+
+  # ---------------------------
+  # DOCKER (Linux only)
+  # ---------------------------
+  - name: Install Docker (Linux only)
+    shell: curl -fsSL https://get.docker.com | sh
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - is_wsl.rc != 0
+
+
+  # ---------------------------
+  # TERRAFORM
+  # ---------------------------
+  - name: Install Terraform
+    shell: |
+      wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+      unzip terraform_1.7.5_linux_amd64.zip
+      mv terraform /usr/local/bin/
+      rm terraform_1.7.5_linux_amd64.zip
+    when: ansible_facts['os_family'] == "Debian"
+
+
+  # ---------------------------
+  # KUBECTL
+  # ---------------------------
+  - name: Install kubectl
+    shell: |
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      chmod +x kubectl
+      mv kubectl /usr/local/bin/
+    when: ansible_facts['os_family'] == "Debian"
+
+
+  # ---------------------------
+  # HELM
+  # ---------------------------
+  - name: Install Helm
+    shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    when: ansible_facts['os_family'] == "Debian"
+
+
+  # ---------------------------
+  # AWS CLI
+  # ---------------------------
+  - name: Install AWS CLI
+    shell: |
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws.zip
+      unzip aws.zip
+      sudo ./aws/install
+      rm -rf aws aws.zip
+    when: ansible_facts['os_family'] == "Debian"
+
+
+  # ---------------------------
+  # NODE (NVM)
+  # ---------------------------
+  - name: Install NVM and Node LTS
+    shell: |
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      export NVM_DIR="$HOME/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+      nvm install --lts
