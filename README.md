@@ -42,12 +42,22 @@ Uses Homebrew + Brewfile to install:
 
 ## ⚡ Quick Start
 
-### 1. Install Ansible (if not installed)
+### 1️⃣ Install Ansible (if not installed)
+
+**For macOS**
+
 ```bash
-sudo apt update && sudo apt install ansible -y
+brew install ansible
 ```
 
-### 2. Run the playbook
+**For Linux / WSL (Ubuntu / Debian)**
+
+```bash
+sudo apt update
+sudo apt install ansible -y
+```
+
+### 2️⃣ Run the playbook
 ```bash
 ansible-playbook playbook.yml
 ```
