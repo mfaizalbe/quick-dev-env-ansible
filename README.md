@@ -1,6 +1,6 @@
 # 🚀 DevOps Bootstrap Environment (Ansible)
 
-A **production-grade, portable DevOps environment setup** using Ansible.
+A **portable DevOps environment setup** using Ansible.
 
 This project automates the installation and configuration of essential DevOps tools across **macOS and Linux (Debian/WSL)** in a repeatable and idempotent way.
 
