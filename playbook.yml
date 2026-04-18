@@ -1,4 +1,4 @@
-- name: DevOps Bootstrap (Production Grade)
+- name: DevOps Bootstrap
   hosts: localhost
   connection: local
   gather_facts: yes
