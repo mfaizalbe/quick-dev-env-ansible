@@ -1,110 +1,138 @@
-# quick-dev-env-ansible
-Bootstrap a development environment on macOS, Linux, or WSL with a single Ansible command.
+# 🚀 DevOps Bootstrap Environment (Ansible)
 
-# 🚀 Quick Dev Environment (Ansible)
+A **production-grade, portable DevOps environment setup** using Ansible.
 
-A simple Ansible playbook to bootstrap a ready-to-use DevOps development environment on Linux or WSL.
-
-This project installs common DevOps tools in a consistent way for local development and onboarding.
+This project automates the installation and configuration of essential DevOps tools across **macOS and Linux (Debian/WSL)** in a repeatable and idempotent way.
 
 ---
 
-## 🧰 What it installs
+# 🧠 Purpose
 
-### 🐧 Linux / WSL
-- Git  
-- Curl / Wget  
-- Python 3 + pip + venv  
-- Build tools  
-- Docker  
-- Terraform  
-- kubectl  
-- Helm  
-- AWS CLI  
-- Node.js (via NVM)  
+To eliminate manual setup and ensure every machine has a **consistent development environment** for:
+
+* DevOps workflows
+* Cloud engineering
+* Infrastructure as Code (IaC)
+* CI/CD pipelines
 
 ---
 
-### 🍎 macOS
-Uses Homebrew + Brewfile to install:
+# ⚙️ What gets installed
 
-- Git  
-- Python  
-- Terraform  
-- AWS CLI  
-- kubectl  
-- Helm  
-- Docker Desktop  
-- Node.js (NVM)  
-- VS Code  
+## 🖥️ Core Tools
+
+* Git
+* Curl / Wget
+* Python 3
+* Pip / Venv
+
+## ☁️ Cloud & DevOps Tools
+
+* AWS CLI
+* Terraform (version-controlled)
+* kubectl (Kubernetes CLI)
+* Helm
+
+## 🐳 Containers
+
+* Docker (Linux only)
+
+## 🟢 Node.js Environment
+
+* NVM (Node Version Manager)
+* Node.js LTS
+* npm
 
 ---
 
-## ⚡ Quick Start
+# 🧩 Supported Systems
 
-### 1️⃣ Install Ansible (if not installed)
+| OS                                | Status             |
+| --------------------------------- | ------------------ |
+| macOS (Apple Silicon / Intel)     | ✅                  |
+| Ubuntu / Debian                   | ✅                  |
+| WSL (Windows Subsystem for Linux) | ⚠️ partial support |
 
-**For macOS**
+---
+
+# 🚀 Quick Start
+
+## 1. Clone repository
 
 ```bash
-brew install ansible
+git clone <repo-url>
+cd quick-dev-env-ansible
 ```
 
-**For Linux / WSL (Ubuntu / Debian)**
+## 2. Run setup
 
-```bash
-sudo apt update
-sudo apt install ansible -y
-```
-
-### 2️⃣ Run the playbook
 ```bash
 ansible-playbook playbook.yml
 ```
 
 ---
 
-## 🧠 How it works
-### macOS
-  
-  → Homebrew + Brewfile
-  
-  → Installs full dev toolchain
+# 🔍 Verify installation
 
+After running the playbook:
 
-
-### Linux / WSL
-  
-  → Ansible playbook
-  
-  → Installs full dev toolchain
-
-
-
-### WSL detection
-  
-  → Skips Docker engine install
-  
-  → Prompts Docker Desktop usage
+```bash
+git --version
+node -v
+npm -v
+python3 --version
+aws --version
+terraform -version
+kubectl version --client
+helm version
+```
 
 ---
 
-## 🛠️ Tech Stack
-Ansible (automation)
+# 🏗️ Design Principles
 
-Homebrew (macOS)
+This project follows production DevOps principles:
 
-Bash (Linux shell execution)
+### ✔ Idempotency
 
-WSL (Windows Linux layer)
+* Safe to run multiple times
+* No duplicate installations
+
+### ✔ Portability
+
+* Works across macOS and Linux
+
+### ✔ Version Control
+
+* Terraform and Kubernetes tools are pinned
+
+### ✔ Minimal manual setup
+
+* No need for manual installs after first run
 
 ---
 
-## 📌 Notes
-Run with `sudo` when required (Linux)
+# ⚠️ Notes
 
-Docker Desktop required on macOS/Windows
+* NVM requires shell reload (`source ~/.zshrc`) after installation
+* AWS CLI and Docker may require system permissions on Linux
+* Kubernetes cluster is not installed (kubectl only)
 
-WSL must be enabled for Windows users
+---
 
-Designed for simplicity, not enterprise complexity
+# 🧠 Known Limitations
+
+* kubectl requires a running cluster to test fully
+* Docker install is system-level (Linux only)
+* macOS Homebrew path differences may exist on Intel Macs
+
+---
+
+# 📈 Future Improvements
+
+* Role-based Ansible structure
+* CI/CD validation (GitHub Actions)
+* Version lock file for all tools
+* Multi-machine provisioning support
+
+

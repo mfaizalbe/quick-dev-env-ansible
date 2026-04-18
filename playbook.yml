@@ -1,115 +1,208 @@
-- name: Quick Dev Environment Setup
+- name: DevOps Bootstrap (Production Grade)
   hosts: localhost
   connection: local
   gather_facts: yes
-  become: true
+  become: false
+
+  vars:
+    terraform_version: "1.7.5"
+    kubectl_version: "v1.30.0"
+    nvm_version: "v0.39.7"
 
   tasks:
 
-  # ---------------------------
-  # MACOS SETUP
-  # ---------------------------
+  # =====================================================
+  # BASE SAFETY
+  # =====================================================
+  - name: Ensure shell config exists
+    file:
+      path: "{{ ansible_env.HOME }}/.zshrc"
+      state: touch
+
+  # =====================================================
+  # MACOS (Homebrew-safe install)
+  # =====================================================
+  - name: Check Homebrew exists
+    stat:
+      path: /opt/homebrew/bin/brew
+    register: brew_check
+
   - name: Install Homebrew (macOS)
     shell: |
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    when: ansible_facts['os_family'] == "Darwin"
-    args:
-      creates: /opt/homebrew/bin/brew
+    when:
+      - ansible_facts['os_family'] == "Darwin"
+      - not brew_check.stat.exists
 
-  - name: Brew update (macOS)
+  - name: Brew update
     shell: brew update
     when: ansible_facts['os_family'] == "Darwin"
-    become: false
 
-  - name: Install macOS tools from Brewfile
+  - name: Install macOS tools (Brewfile)
     shell: brew bundle --file ./Brewfile
     when: ansible_facts['os_family'] == "Darwin"
-    become: false
 
-
-  # ---------------------------
-  # LINUX / WSL SETUP
-  # ---------------------------
-  - name: Detect WSL
-    shell: grep -qi microsoft /proc/version
-    register: is_wsl
-    ignore_errors: yes
-    when: ansible_facts['os_family'] == "Debian"
-
+  # =====================================================
+  # LINUX BASE PACKAGES
+  # =====================================================
   - name: Install base packages (Linux)
     apt:
       name:
         - git
         - curl
         - wget
+        - unzip
+        - build-essential
         - python3
         - python3-pip
         - python3-venv
-        - build-essential
-        - unzip
       state: present
+      update_cache: yes
     when: ansible_facts['os_family'] == "Debian"
+    become: true
 
+  # =====================================================
+  # DOCKER (SAFE)
+  # =====================================================
+  - name: Check Docker exists
+    stat:
+      path: /usr/bin/docker
+    register: docker_check
 
-  # ---------------------------
-  # DOCKER (Linux only)
-  # ---------------------------
-  - name: Install Docker (Linux only)
+  - name: Install Docker (Linux)
     shell: curl -fsSL https://get.docker.com | sh
     when:
       - ansible_facts['os_family'] == "Debian"
-      - is_wsl.rc != 0
+      - not docker_check.stat.exists
+    become: true
 
+  # =====================================================
+  # TERRAFORM (VERSIONED SAFE INSTALL)
+  # =====================================================
+  - name: Check Terraform exists
+    stat:
+      path: /usr/local/bin/terraform
+    register: tf_check
 
-  # ---------------------------
-  # TERRAFORM
-  # ---------------------------
   - name: Install Terraform
-    shell: |
-      wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
-      unzip terraform_1.7.5_linux_amd64.zip
-      mv terraform /usr/local/bin/
-      rm terraform_1.7.5_linux_amd64.zip
-    when: ansible_facts['os_family'] == "Debian"
+    get_url:
+      url: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+      dest: /tmp/terraform.zip
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - not tf_check.stat.exists
 
+  - name: Unzip Terraform
+    unarchive:
+      src: /tmp/terraform.zip
+      dest: /usr/local/bin/
+      remote_src: yes
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - not tf_check.stat.exists
+    become: true
 
-  # ---------------------------
-  # KUBECTL
-  # ---------------------------
+  # =====================================================
+  # KUBECTL (VERSIONED SAFE INSTALL)
+  # =====================================================
+  - name: Check kubectl exists
+    stat:
+      path: /usr/local/bin/kubectl
+    register: kubectl_check
+
   - name: Install kubectl
-    shell: |
-      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      chmod +x kubectl
-      mv kubectl /usr/local/bin/
-    when: ansible_facts['os_family'] == "Debian"
+    get_url:
+      url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+      dest: /usr/local/bin/kubectl
+      mode: '0755'
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - not kubectl_check.stat.exists
+    become: true
 
+  # =====================================================
+  # HELM (SAFE INSTALL)
+  # =====================================================
+  - name: Check Helm exists
+    stat:
+      path: /usr/local/bin/helm
+    register: helm_check
 
-  # ---------------------------
-  # HELM
-  # ---------------------------
   - name: Install Helm
-    shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-    when: ansible_facts['os_family'] == "Debian"
+    shell: |
+      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - not helm_check.stat.exists
+    become: true
 
+  # =====================================================
+  # AWS CLI (SAFE INSTALL)
+  # =====================================================
+  - name: Check AWS CLI exists
+    stat:
+      path: /usr/local/bin/aws
+    register: aws_check
 
-  # ---------------------------
-  # AWS CLI
-  # ---------------------------
   - name: Install AWS CLI
     shell: |
-      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws.zip
-      unzip aws.zip
-      sudo ./aws/install
-      rm -rf aws aws.zip
-    when: ansible_facts['os_family'] == "Debian"
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/aws.zip
+      unzip -o /tmp/aws.zip -d /tmp/
+      /tmp/aws/install --update
+    when:
+      - ansible_facts['os_family'] == "Debian"
+      - not aws_check.stat.exists
+    become: true
 
+  # =====================================================
+  # NODE (NVM SAFE)
+  # =====================================================
+  - name: Check NVM exists
+    stat:
+      path: "{{ ansible_env.HOME }}/.nvm"
+    register: nvm_check
 
-  # ---------------------------
-  # NODE (NVM)
-  # ---------------------------
-  - name: Install NVM and Node LTS
+  - name: Install NVM
     shell: |
-      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+    when: not nvm_check.stat.exists
+
+  - name: Configure NVM in zshrc
+    blockinfile:
+      path: "{{ ansible_env.HOME }}/.zshrc"
+      marker: "# {mark} ANSIBLE NVM SETUP"
+      block: |
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+        [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+
+  - name: Install Node LTS via NVM
+    shell: |
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
       nvm install --lts
+      nvm use --lts
+    args:
+      executable: /bin/bash
+
+  # =====================================================
+  # VERIFICATION (CLEAN)
+  # =====================================================
+  - name: Verify environment
+    shell: |
+      echo "===== DEVOPS ENVIRONMENT ====="
+      printf "Git:       %s\n" "$(git --version)"
+      printf "Node:      %s\n" "$(node -v)"
+      printf "npm:       %s\n" "$(npm -v)"
+      printf "Python:    %s\n" "$(python3 --version)"
+      printf "Terraform: %s\n" "$(terraform -version | head -n1)"
+      printf "kubectl:   %s\n" "$(kubectl version --client --short 2>/dev/null || true)"
+      printf "Helm:      %s\n" "$(helm version --short 2>/dev/null || true)"
+      printf "AWS CLI:   %s\n" "$(aws --version)"
+    register: verify_output
+    args:
+      executable: /bin/bash
+
+  - name: Show output
+    debug:
+      var: verify_output.stdout
