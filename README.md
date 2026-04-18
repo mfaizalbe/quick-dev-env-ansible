@@ -1,9 +1,9 @@
 # quick-dev-env-ansible
-Quickly set up a development environment on macOS, Linux, WSL, or Windows with one command.
+Bootstrap a development environment on macOS, Linux, or WSL with a single Ansible command.
 
 # 🚀 Quick Dev Environment (Ansible)
 
-A simple Ansible playbook to bootstrap a **ready-to-use DevOps development environment** on Linux and WSL.
+A simple Ansible playbook to bootstrap a ready-to-use DevOps development environment on Linux or WSL.
 
 This project installs common DevOps tools in a consistent way for local development and onboarding.
 
@@ -51,27 +51,50 @@ sudo apt update && sudo apt install ansible -y
 ```bash
 ansible-playbook playbook.yml
 ```
+
+---
+
 ## 🧠 How it works
-macOS
+### macOS
+  
   → Homebrew + Brewfile
+  
   → Installs full dev toolchain
 
-Linux / WSL
+
+
+### Linux / WSL
+  
   → Ansible playbook
+  
   → Installs full dev toolchain
 
-WSL detection
+
+
+### WSL detection
+  
   → Skips Docker engine install
+  
   → Prompts Docker Desktop usage
+
+---
 
 ## 🛠️ Tech Stack
 Ansible (automation)
+
 Homebrew (macOS)
+
 Bash (Linux shell execution)
+
 WSL (Windows Linux layer)
+
+---
 
 ## 📌 Notes
 Run with `sudo` when required (Linux)
+
 Docker Desktop required on macOS/Windows
+
 WSL must be enabled for Windows users
+
 Designed for simplicity, not enterprise complexity
