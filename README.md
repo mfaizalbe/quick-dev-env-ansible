@@ -60,7 +60,7 @@ To eliminate manual setup and ensure every machine has a **consistent developmen
 ## 1. Clone repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/mfaizalbe/quick-dev-env-ansible.git
 cd quick-dev-env-ansible
 ```
 
